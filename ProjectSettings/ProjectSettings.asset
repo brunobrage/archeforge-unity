@@ -1,0 +1,17 @@
+{
+    "companyName": "DefaultCompany",
+    "productName": "Archeforge Unity",
+    "productVersion": "0.1",
+    "dataUrl": "Archeforge Unity.data",
+    "wasmCodeUrl": "Archeforge Unity.wasm.code.unityweb",
+    "wasmFrameworkUrl": "Archeforge Unity.wasm.framework.unityweb",
+    "wasmSymbolsUrl": "Archeforge Unity.wasm.symbols.unityweb",
+    "streamingAssetsUrl": "StreamingAssets",
+    "frameworkUrl": "build.framework.js",
+    "codeUrl": "build.wasm",
+    "symbolsUrl": "build.symbols.json",
+    "streamingAssetsUrl": "streamingassets",
+    "companyName": "DefaultCompany",
+    "productName": "Archeforge Unity",
+    "productVersion": "0.1"
+}
