@@ -74,7 +74,7 @@ public class Collector : MonoBehaviour
         Vector2 direction = diff.normalized;
         float velocity = Speed * deltaTime;
         transform.position = (Vector3)((Vector2)transform.position + direction * velocity);
-        rb.velocity = Vector2.zero;
+        rb.linearVelocity = Vector2.zero;
     }
 
     public int Update(Player player, GridSystem gridSystem, float deltaTime, InventorySystem inventory)

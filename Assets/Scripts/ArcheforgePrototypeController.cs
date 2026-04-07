@@ -1,5 +1,3 @@
-using System;
-using System.Collections.Generic;
 using System.Linq;
 using UnityEngine;
 using UnityEngine.EventSystems;
@@ -7,240 +5,9 @@ using UnityEngine.UI;
 
 namespace Archeforge.UnityPort
 {
-    public class ArcheforgePrototypeController : MonoBehaviour
+    public class ArcheforgePrototypeController : ArcheforgePrototypeControllerBase
     {
-        private enum TileType { Empty, Solid, Resource }
-        private enum AffinityType { Craft, Melee, Fire, Nature }
-        private enum WeaponId { RustyDagger, WoodSword, IronSword }
-        private enum EnemyKind { Chicken, Santelmo, Tikbalang, DwendeBlue, Kapre }
-
-        [Serializable]
-        private sealed class WeaponDefinition
-        {
-            public WeaponId Id;
-            public string Name = string.Empty;
-            public int BaseDamage;
-            public float CritChance;
-            public float CritMultiplier;
-        }
-
-        [Serializable]
-        private sealed class InventoryItem
-        {
-            public string Id = string.Empty;
-            public string Name = string.Empty;
-            public int Quantity;
-            public int MaxStack = 99;
-        }
-
-        [Serializable]
-        private sealed class Ingredient
-        {
-            public string ItemId = string.Empty;
-            public int Quantity;
-        }
-
-        [Serializable]
-        private sealed class Recipe
-        {
-            public string Id = string.Empty;
-            public string Name = string.Empty;
-            public List<Ingredient> Ingredients = new();
-            public string ResultItemId = string.Empty;
-            public int ResultQuantity = 1;
-            public AffinityType? RequiredAffinity;
-            public int RequiredAmount;
-        }
-
-        private sealed class ActorView
-        {
-            public GameObject GameObject = null!;
-            public SpriteRenderer Renderer = null!;
-        }
-
-        private sealed class PlayerState
-        {
-            public Vector2 Position = new(12f, 12f);
-            public Vector2 Facing = Vector2.down;
-            public int Level = 1;
-            public int Xp;
-            public int MaxHealth = 100;
-            public int Health = 100;
-            public WeaponId EquippedWeapon = WeaponId.RustyDagger;
-            public readonly Dictionary<AffinityType, int> Affinities = new()
-            {
-                { AffinityType.Craft, 0 },
-                { AffinityType.Melee, 0 },
-                { AffinityType.Fire, 0 },
-                { AffinityType.Nature, 0 }
-            };
-        }
-
-        private sealed class CreatureState
-        {
-            public Vector2 Position = new(9f, 10f);
-            public int Level = 1;
-            public int Xp;
-            public int MaxHealth = 50;
-            public int Health = 50;
-            public int Damage = 5;
-            public float AttackCooldown;
-        }
-
-        private sealed class CollectorState
-        {
-            public Vector2 Position = new(7f, 10f);
-            public int CollectedCount;
-        }
-
-        private sealed class EnemyState
-        {
-            public EnemyKind Kind;
-            public Vector2 Position;
-            public int MaxHealth;
-            public int Health;
-            public int Damage;
-            public float Speed;
-            public float DetectionRange;
-            public float AttackRange;
-            public float AttackCooldown;
-            public float AttackTimer;
-            public bool Alive = true;
-            public int SpawnSlotIndex;
-            public ActorView View = null!;
-        }
-
-        private sealed class SpawnSlot
-        {
-            public EnemyKind Kind;
-            public Vector2 Center;
-            public float Radius;
-            public EnemyState? Enemy;
-            public float RespawnTimer;
-        }
-
-        private sealed class WorldDrop
-        {
-            public string ItemId = string.Empty;
-            public string Name = string.Empty;
-            public int Quantity;
-            public Vector2 Position;
-            public ActorView View = null!;
-        }
-
-        [Serializable]
-        private sealed class SaveData
-        {
-            public int PlayerLevel;
-            public int PlayerXp;
-            public int PlayerHealth;
-            public string Weapon = string.Empty;
-            public float PlayerX;
-            public float PlayerY;
-            public int CreatureLevel;
-            public int CreatureXp;
-            public int CreatureHealth;
-            public float CreatureX;
-            public float CreatureY;
-            public int CollectorCount;
-            public List<AffinityEntry> Affinities = new();
-            public List<InventoryEntry> Inventory = new();
-        }
-
-        [Serializable]
-        private sealed class AffinityEntry
-        {
-            public string Key = string.Empty;
-            public int Value;
-        }
-
-        [Serializable]
-        private sealed class InventoryEntry
-        {
-            public string Id = string.Empty;
-            public string Name = string.Empty;
-            public int Quantity;
-            public int MaxStack;
-        }
-
-        private readonly Dictionary<WeaponId, WeaponDefinition> weaponDefinitions = new()
-        {
-            { WeaponId.RustyDagger, new WeaponDefinition { Id = WeaponId.RustyDagger, Name = "Rusty Dagger", BaseDamage = 5, CritChance = 0.18f, CritMultiplier = 2.1f } },
-            { WeaponId.WoodSword, new WeaponDefinition { Id = WeaponId.WoodSword, Name = "Wood Sword", BaseDamage = 8, CritChance = 0.10f, CritMultiplier = 1.8f } },
-            { WeaponId.IronSword, new WeaponDefinition { Id = WeaponId.IronSword, Name = "Iron Sword", BaseDamage = 12, CritChance = 0.06f, CritMultiplier = 1.65f } }
-        };
-
-        private readonly List<Recipe> recipes = new()
-        {
-            new Recipe
-            {
-                Id = "wood_sword",
-                Name = "Wood Sword",
-                Ingredients = new List<Ingredient> { new Ingredient { ItemId = "wood", Quantity = 3 } },
-                ResultItemId = "wood_sword",
-                ResultQuantity = 1,
-                RequiredAffinity = AffinityType.Craft,
-                RequiredAmount = 10
-            },
-            new Recipe
-            {
-                Id = "iron_sword",
-                Name = "Iron Sword",
-                Ingredients = new List<Ingredient>
-                {
-                    new Ingredient { ItemId = "iron_ore", Quantity = 2 },
-                    new Ingredient { ItemId = "wood", Quantity = 1 }
-                },
-                ResultItemId = "iron_sword",
-                ResultQuantity = 1,
-                RequiredAffinity = AffinityType.Craft,
-                RequiredAmount = 30
-            },
-            new Recipe
-            {
-                Id = "fire_staff",
-                Name = "Fire Staff",
-                Ingredients = new List<Ingredient>
-                {
-                    new Ingredient { ItemId = "wood", Quantity = 4 },
-                    new Ingredient { ItemId = "iron_ore", Quantity = 1 }
-                },
-                ResultItemId = "fire_staff",
-                ResultQuantity = 1,
-                RequiredAffinity = AffinityType.Fire,
-                RequiredAmount = 20
-            }
-        };
-
-        private readonly List<string> logs = new();
-        private readonly List<InventoryItem> inventory = new();
-        private readonly List<EnemyState> enemies = new();
-        private readonly List<SpawnSlot> spawnSlots = new();
-        private readonly List<WorldDrop> worldDrops = new();
-
-        private TileType[,] grid = null!;
-        private Sprite whiteSprite = null!;
-        private Camera mainCamera = null!;
         private Canvas runtimeCanvas = null!;
-        private PlayerState player = null!;
-        private CreatureState creature = null!;
-        private CollectorState collector = null!;
-        private ActorView playerView = null!;
-        private ActorView creatureView = null!;
-        private ActorView collectorView = null!;
-
-        private bool inventoryOpen;
-        private bool craftingOpen;
-        private Vector2 inventoryScroll;
-        private Vector2 craftingScroll;
-        private float panelFlashTimer;
-        private Color panelFlashColor = Color.cyan;
-
-        private const int GridWidth = 100;
-        private const int GridHeight = 100;
-        private const float TileSize = 1f;
-        private const float PlayerSpeed = 6.5f;
-        private const string SaveKey = "archeforge-unity-prototype-v1";
 
         private void Awake()
         {
@@ -260,11 +27,15 @@ namespace Archeforge.UnityPort
 
             whiteSprite = Sprite.Create(Texture2D.whiteTexture, new Rect(0f, 0f, 1f, 1f), new Vector2(0.5f, 0.5f), 1f);
             grid = new TileType[GridWidth, GridHeight];
+            biomeGrid = new TileBiome[GridWidth, GridHeight];
+            materialGrid = new TileMaterial[GridWidth, GridHeight];
+            tileViews = new TileView[GridWidth, GridHeight];
             player = new PlayerState();
             creature = new CreatureState();
             collector = new CollectorState();
 
             GenerateGrid();
+            CreateTileMapView();
             BuildSpawnSlots();
             CreateViews();
             LoadState();
@@ -316,9 +87,11 @@ namespace Archeforge.UnityPort
             }
             else
             {
+                playerInput = Vector2.zero;
                 ApplyPosition(playerView, player.Position);
             }
 
+            UpdatePlayerPresentation(dt);
             ApplyPosition(playerView, player.Position);
             ApplyPosition(creatureView, creature.Position);
             ApplyPosition(collectorView, collector.Position);
@@ -334,52 +107,41 @@ namespace Archeforge.UnityPort
             SaveState();
         }
 
-        private void GenerateGrid()
-        {
-            for (int y = 0; y < GridHeight; y++)
-            {
-                for (int x = 0; x < GridWidth; x++)
-                {
-                    bool border = x == 0 || y == 0 || x == GridWidth - 1 || y == GridHeight - 1;
-                    bool cluster = (y % 4 == 0 && x % 5 == 0) || (y % 6 == 2 && x % 7 == 3);
-                    bool randomRock = UnityEngine.Random.value < 0.05f;
-                    grid[x, y] = border || cluster || randomRock ? TileType.Solid : TileType.Empty;
-                }
-            }
-        }
-
         private void BuildSpawnSlots()
         {
             spawnSlots.Clear();
-            spawnSlots.Add(new SpawnSlot { Kind = EnemyKind.Chicken, Center = new Vector2(16f, 6f), Radius = 3.2f });
-            spawnSlots.Add(new SpawnSlot { Kind = EnemyKind.Santelmo, Center = new Vector2(25f, 12f), Radius = 3.8f });
-            spawnSlots.Add(new SpawnSlot { Kind = EnemyKind.Tikbalang, Center = new Vector2(37f, 9f), Radius = 4.2f });
-            spawnSlots.Add(new SpawnSlot { Kind = EnemyKind.DwendeBlue, Center = new Vector2(18f, 18f), Radius = 3.2f });
-            spawnSlots.Add(new SpawnSlot { Kind = EnemyKind.Kapre, Center = new Vector2(46f, 26f), Radius = 4f });
+            AddSpawnSlot(new Vector2(12f, 10f), 3.4f);
+            AddSpawnSlot(new Vector2(18f, 28f), 3.8f);
+            AddSpawnSlot(new Vector2(30f, 72f), 4.1f);
+            AddSpawnSlot(new Vector2(56f, 22f), 4.0f);
+            AddSpawnSlot(new Vector2(63f, 54f), 4.2f);
+            AddSpawnSlot(new Vector2(82f, 18f), 4.4f);
+            AddSpawnSlot(new Vector2(88f, 36f), 4.1f);
+            AddSpawnSlot(new Vector2(42f, 44f), 3.9f);
         }
 
-        private void CreateViews()
+        private void AddSpawnSlot(Vector2 center, float radius)
         {
-            playerView = CreateActorView("Player", new Color(0.96f, 0.86f, 0.32f), new Vector2(0.9f, 0.9f));
-            creatureView = CreateActorView("Creature", new Color(0.44f, 0.83f, 1f), new Vector2(0.8f, 0.8f));
-            collectorView = CreateActorView("Collector", new Color(0.45f, 0.9f, 0.52f), new Vector2(0.7f, 0.7f));
+            Vector2Int tile = WorldToTile(center);
+            TileBiome biome = IsWithin(tile) ? biomeGrid[tile.x, tile.y] : TileBiome.Plains;
+            spawnSlots.Add(new SpawnSlot
+            {
+                Kind = GetEnemyKindForBiome(biome),
+                Center = center,
+                Radius = radius
+            });
         }
 
-        private ActorView CreateActorView(string name, Color color, Vector2 size)
+        private EnemyKind GetEnemyKindForBiome(TileBiome biome)
         {
-            var go = new GameObject(name);
-            var renderer = go.AddComponent<SpriteRenderer>();
-            renderer.sprite = whiteSprite;
-            renderer.color = color;
-            go.transform.localScale = new Vector3(size.x, size.y, 1f);
-            return new ActorView { GameObject = go, Renderer = renderer };
-        }
-
-        private ActorView CreateDropView(string name, Color color)
-        {
-            var view = CreateActorView(name, color, new Vector2(0.35f, 0.35f));
-            view.Renderer.sortingOrder = 2;
-            return view;
+            return biome switch
+            {
+                TileBiome.Forest => UnityEngine.Random.value < 0.5f ? EnemyKind.Chicken : EnemyKind.DwendeBlue,
+                TileBiome.Ruins => UnityEngine.Random.value < 0.55f ? EnemyKind.Kapre : EnemyKind.Santelmo,
+                TileBiome.IronWastes => UnityEngine.Random.value < 0.55f ? EnemyKind.Tikbalang : EnemyKind.Kapre,
+                TileBiome.Ember => UnityEngine.Random.value < 0.6f ? EnemyKind.Santelmo : EnemyKind.Tikbalang,
+                _ => UnityEngine.Random.value < 0.5f ? EnemyKind.Chicken : EnemyKind.Tikbalang
+            };
         }
 
         private void SpawnInitialEnemies()
@@ -452,7 +214,7 @@ namespace Archeforge.UnityPort
                 AttackRange = attackRange,
                 AttackCooldown = cooldown,
                 SpawnSlotIndex = spawnSlotIndex,
-                View = CreateActorView(kind.ToString(), color, new Vector2(0.85f, 0.85f))
+                View = CreateEnemyView(kind, color)
             };
 
             ApplyPosition(enemy.View, enemy.Position);
@@ -485,6 +247,15 @@ namespace Archeforge.UnityPort
 
         private void HandleGlobalInput()
         {
+            if (Input.GetKeyDown(KeyCode.Alpha1)) selectedHotbarIndex = 0;
+            if (Input.GetKeyDown(KeyCode.Alpha2)) selectedHotbarIndex = 1;
+            if (Input.GetKeyDown(KeyCode.Alpha3)) selectedHotbarIndex = 2;
+            if (Input.GetKeyDown(KeyCode.Alpha4)) selectedHotbarIndex = 3;
+            if (Input.GetKeyDown(KeyCode.Alpha5)) selectedHotbarIndex = 4;
+            if (Input.GetKeyDown(KeyCode.Alpha6)) selectedHotbarIndex = 5;
+            if (Input.GetKeyDown(KeyCode.Alpha7)) selectedHotbarIndex = 6;
+            if (Input.GetKeyDown(KeyCode.Alpha8)) selectedHotbarIndex = 7;
+
             if (Input.GetKeyDown(KeyCode.I))
             {
                 inventoryOpen = !inventoryOpen;
@@ -512,6 +283,7 @@ namespace Archeforge.UnityPort
             if (Input.GetKey(KeyCode.W) || Input.GetKey(KeyCode.UpArrow)) input.y += 1f;
             if (Input.GetKey(KeyCode.S) || Input.GetKey(KeyCode.DownArrow)) input.y -= 1f;
             if (input.sqrMagnitude > 1f) input.Normalize();
+            playerInput = input;
             if (input.sqrMagnitude > 0f) player.Facing = input;
 
             Vector2 next = player.Position + input * PlayerSpeed * dt;
@@ -529,6 +301,12 @@ namespace Archeforge.UnityPort
 
         private void HandleMining()
         {
+            if (Input.GetMouseButtonDown(1))
+            {
+                TryPlaceBlockFromHotbar();
+                return;
+            }
+
             if (!Input.GetMouseButtonDown(0)) return;
 
             Vector2Int tile = WorldToTile(GetMouseWorld());
@@ -536,19 +314,74 @@ namespace Archeforge.UnityPort
 
             if (grid[tile.x, tile.y] == TileType.Solid)
             {
-                grid[tile.x, tile.y] = TileType.Resource;
-                GrantAffinity(AffinityType.Craft, 10);
-                if (UnityEngine.Random.value < 0.3f)
+                if (IsPlacedBlock(materialGrid[tile.x, tile.y]))
                 {
-                    AddItem("iron_ore", "Iron Ore", 1);
-                    AddLog("Mined Iron Ore.");
+                    string itemId = GetPlacedBlockItemId(materialGrid[tile.x, tile.y]);
+                    AddItem(itemId, GetDisplayName(itemId), 1);
+                    grid[tile.x, tile.y] = TileType.Empty;
+                    materialGrid[tile.x, tile.y] = GetDefaultMaterial(biomeGrid[tile.x, tile.y], TileType.Empty);
+                    RefreshTileVisual(tile.x, tile.y);
+                    AddLog($"Recovered {GetDisplayName(itemId)} block.");
                 }
                 else
                 {
-                    AddItem("wood", "Wood", 1);
-                    AddLog("Mined Wood.");
+                    ItemDrop minedDrop = GetBiomeMineDrop(tile.x, tile.y);
+                    grid[tile.x, tile.y] = TileType.Resource;
+                    materialGrid[tile.x, tile.y] = GetDefaultMaterial(biomeGrid[tile.x, tile.y], TileType.Resource);
+                    RefreshTileVisual(tile.x, tile.y);
+                    GrantAffinity(AffinityType.Craft, 10);
+                    AddItem(minedDrop.ItemId, minedDrop.Name, 1);
+                    AddLog($"Mined {minedDrop.Name}.");
                 }
             }
+        }
+
+        private void TryPlaceBlockFromHotbar()
+        {
+            string itemId = hotbarItemIds[selectedHotbarIndex];
+            if (string.IsNullOrEmpty(itemId))
+            {
+                AddLog("Selected hotbar slot is empty.");
+                return;
+            }
+
+            if (!IsPlaceableItem(itemId))
+            {
+                AddLog($"{GetDisplayName(itemId)} cannot be placed.");
+                return;
+            }
+
+            Vector2Int tile = WorldToTile(GetMouseWorld());
+            if (!IsWithin(tile))
+            {
+                return;
+            }
+
+            if (grid[tile.x, tile.y] != TileType.Empty)
+            {
+                AddLog("Can only place a block on an empty tile.");
+                return;
+            }
+
+            Vector2 tileCenter = TileToWorld(tile.x, tile.y);
+            if (Vector2.Distance(tileCenter, player.Position) > 4f)
+            {
+                AddLog("Too far away to place a block.");
+                return;
+            }
+
+            if (!RemoveItem(itemId, 1))
+            {
+                AddLog($"No {GetDisplayName(itemId)} left in inventory.");
+                return;
+            }
+
+            grid[tile.x, tile.y] = TileType.Solid;
+            materialGrid[tile.x, tile.y] = GetPlacedMaterial(itemId);
+            RefreshTileVisual(tile.x, tile.y);
+            AddLog($"{GetDisplayName(itemId)} block placed.");
+            CleanupHotbarReferences(itemId);
+            SaveState();
         }
 
         private void UpdateCamera()
@@ -611,6 +444,7 @@ namespace Archeforge.UnityPort
 
                     Vector2 next = enemy.Position + dir * enemy.Speed * dt;
                     TryMove(ref enemy.Position, next);
+                    SetFacing(enemy.View, dir.x);
                 }
 
                 ApplyPosition(enemy.View, enemy.Position);
@@ -619,12 +453,21 @@ namespace Archeforge.UnityPort
 
         private void UpdateCreature(float dt)
         {
-            EnemyState? target = enemies.Where(e => e.Alive).OrderBy(e => Vector2.Distance(e.Position, creature.Position)).FirstOrDefault();
-            if (target != null && Vector2.Distance(target.Position, creature.Position) < 6.5f)
+            creature.AttackCooldown -= dt;
+            creature.WorkCooldown -= dt;
+
+            EnemyState? target = enemies
+                .Where(e => e.Alive)
+                .OrderBy(e => Mathf.Min(Vector2.Distance(e.Position, creature.Position), Vector2.Distance(e.Position, player.Position)))
+                .FirstOrDefault();
+
+            bool enemyNearCreature = target != null && Vector2.Distance(target.Position, creature.Position) < 6.5f;
+            bool enemyNearPlayer = target != null && Vector2.Distance(target.Position, player.Position) < 5.5f;
+
+            if (target != null && (enemyNearCreature || enemyNearPlayer))
             {
                 Vector2 dir = (target.Position - creature.Position).normalized;
                 TryMove(ref creature.Position, creature.Position + dir * 4.4f * dt);
-                creature.AttackCooldown -= dt;
                 if (Vector2.Distance(target.Position, creature.Position) <= 1.3f && creature.AttackCooldown <= 0f)
                 {
                     creature.AttackCooldown = 0.9f;
@@ -644,15 +487,118 @@ namespace Archeforge.UnityPort
             }
             else
             {
-                Vector2 follow = player.Position + new Vector2(-1.3f, -0.2f);
-                Vector2 dir = follow - creature.Position;
-                if (dir.sqrMagnitude > 0.04f)
-                {
-                    TryMove(ref creature.Position, creature.Position + dir.normalized * 3.8f * dt);
-                }
+                TryCreatureMineNearPlayer(dt);
             }
 
             CollectDropsNear(creature.Position, 1.4f, "Creature");
+        }
+
+        private void TryCreatureMineNearPlayer(float dt)
+        {
+            if (TryFindNearestSolidTileAroundPlayer(6, out Vector2Int mineTile, out Vector2 standPosition))
+            {
+                Vector2 toTarget = standPosition - creature.Position;
+                if (toTarget.sqrMagnitude > 0.06f)
+                {
+                    TryMove(ref creature.Position, creature.Position + toTarget.normalized * 3.6f * dt);
+                    return;
+                }
+
+                if (creature.WorkCooldown <= 0f)
+                {
+                    ItemDrop minedDrop = GetBiomeMineDrop(mineTile.x, mineTile.y);
+                    creature.WorkCooldown = 0.65f;
+                    grid[mineTile.x, mineTile.y] = TileType.Empty;
+                    materialGrid[mineTile.x, mineTile.y] = GetDefaultMaterial(biomeGrid[mineTile.x, mineTile.y], TileType.Empty);
+                    RefreshTileVisual(mineTile.x, mineTile.y);
+                    GrantAffinity(AffinityType.Craft, 6);
+                    AddItem(minedDrop.ItemId, minedDrop.Name, 1);
+                    AddLog($"Creature mined {minedDrop.Name}.");
+                }
+
+                return;
+            }
+
+            Vector2 follow = player.Position + new Vector2(-1.3f, -0.2f);
+            Vector2 dir = follow - creature.Position;
+            if (dir.sqrMagnitude > 0.04f)
+            {
+                TryMove(ref creature.Position, creature.Position + dir.normalized * 3.8f * dt);
+            }
+        }
+
+        private bool TryFindNearestSolidTileAroundPlayer(int radius, out Vector2Int mineTile, out Vector2 standPosition)
+        {
+            mineTile = default;
+            standPosition = default;
+
+            Vector2Int playerTile = WorldToTile(player.Position);
+            float bestScore = float.MaxValue;
+            bool found = false;
+
+            for (int y = playerTile.y - radius; y <= playerTile.y + radius; y++)
+            {
+                for (int x = playerTile.x - radius; x <= playerTile.x + radius; x++)
+                {
+                    Vector2Int tile = new(x, y);
+                    if (!IsWithin(tile) || grid[x, y] != TileType.Solid)
+                    {
+                        continue;
+                    }
+
+                    if (!TryGetClosestWalkableAdjacent(tile, out Vector2 candidateStandPosition))
+                    {
+                        continue;
+                    }
+
+                    float playerDistance = Vector2.Distance(TileToWorld(x, y), player.Position);
+                    float creatureDistance = Vector2.Distance(candidateStandPosition, creature.Position) * 0.35f;
+                    float score = playerDistance + creatureDistance;
+                    if (score < bestScore)
+                    {
+                        bestScore = score;
+                        mineTile = tile;
+                        standPosition = candidateStandPosition;
+                        found = true;
+                    }
+                }
+            }
+
+            return found;
+        }
+
+        private bool TryGetClosestWalkableAdjacent(Vector2Int solidTile, out Vector2 standPosition)
+        {
+            standPosition = default;
+            Vector2[] offsets =
+            {
+                new Vector2(1f, 0f),
+                new Vector2(-1f, 0f),
+                new Vector2(0f, 1f),
+                new Vector2(0f, -1f)
+            };
+
+            float bestDistance = float.MaxValue;
+            bool found = false;
+
+            foreach (Vector2 offset in offsets)
+            {
+                Vector2 candidate = TileToWorld(solidTile.x, solidTile.y) + offset;
+                if (!IsWalkable(candidate))
+                {
+                    continue;
+                }
+
+                float distance = Vector2.Distance(candidate, creature.Position);
+                if (distance < bestDistance)
+                {
+                    bestDistance = distance;
+                    standPosition = candidate;
+                    found = true;
+                }
+            }
+
+            return found;
         }
 
         private void UpdateCollector(float dt)
@@ -692,8 +638,11 @@ namespace Archeforge.UnityPort
                 Vector2Int tile = WorldToTile(bestTarget);
                 if (grid[tile.x, tile.y] == TileType.Resource)
                 {
+                    ItemDrop gatheredDrop = GetBiomeMineDrop(tile.x, tile.y);
                     grid[tile.x, tile.y] = TileType.Empty;
-                    AddItem("wood", "Wood", 1);
+                    materialGrid[tile.x, tile.y] = GetDefaultMaterial(biomeGrid[tile.x, tile.y], TileType.Empty);
+                    RefreshTileVisual(tile.x, tile.y);
+                    AddItem(gatheredDrop.ItemId, gatheredDrop.Name, 1);
                     collector.CollectedCount += 1;
                     GrantAffinity(AffinityType.Nature, 5);
                 }
@@ -731,6 +680,8 @@ namespace Archeforge.UnityPort
             if (IsWithin(tile) && grid[tile.x, tile.y] == TileType.Solid)
             {
                 grid[tile.x, tile.y] = TileType.Empty;
+                materialGrid[tile.x, tile.y] = GetDefaultMaterial(biomeGrid[tile.x, tile.y], TileType.Empty);
+                RefreshTileVisual(tile.x, tile.y);
                 GrantAffinity(AffinityType.Fire, 12);
                 AddLog("Fire action destroyed a block.");
             }
@@ -746,6 +697,8 @@ namespace Archeforge.UnityPort
             if (IsWithin(tile) && grid[tile.x, tile.y] == TileType.Empty)
             {
                 grid[tile.x, tile.y] = TileType.Resource;
+                materialGrid[tile.x, tile.y] = GetDefaultMaterial(biomeGrid[tile.x, tile.y], TileType.Resource);
+                RefreshTileVisual(tile.x, tile.y);
                 GrantAffinity(AffinityType.Nature, 10);
                 AddLog("Nature action planted a resource node.");
             }
@@ -815,11 +768,47 @@ namespace Archeforge.UnityPort
             GUI.Label(new Rect(24f, 324f, 320f, 44f), $"Enemies: {string.Join(", ", enemies.Where(e => e.Alive).Select(e => $"{e.Kind} {e.Health}HP"))}");
 
             GUI.Box(new Rect(12f, Screen.height - 72f, Screen.width - 216f, 60f), "CONTROLS");
-            GUI.Label(new Rect(24f, Screen.height - 46f, Screen.width - 240f, 22f), "WASD/Arrows move | Left Click mine | Space attack | F fire | R nature | E ability | G loot | I inventory | C craft");
+            GUI.Label(new Rect(24f, Screen.height - 46f, Screen.width - 240f, 22f), "WASD/Arrows move | Left Click mine | Right Click place | 1-8 hotbar | Space attack | F fire | R nature | E ability | G loot | I inventory | C craft");
 
             DrawMinimap();
+            DrawHotbar();
             if (inventoryOpen) DrawInventoryWindow();
             if (craftingOpen) DrawCraftingWindow();
+        }
+
+        private void DrawHotbar()
+        {
+            float slotSize = 56f;
+            float spacing = 8f;
+            float totalWidth = hotbarItemIds.Length * slotSize + (hotbarItemIds.Length - 1) * spacing;
+            float startX = (Screen.width - totalWidth) * 0.5f;
+            float y = Screen.height - 146f;
+
+            GUI.Box(new Rect(startX - 12f, y - 28f, totalWidth + 24f, 88f), "HOTBAR");
+
+            for (int i = 0; i < hotbarItemIds.Length; i++)
+            {
+                float x = startX + i * (slotSize + spacing);
+                Rect slotRect = new(x, y, slotSize, slotSize);
+                GUI.color = i == selectedHotbarIndex ? new Color(1f, 0.95f, 0.55f) : Color.white;
+                GUI.Box(slotRect, string.Empty);
+                GUI.color = Color.white;
+
+                string itemId = hotbarItemIds[i];
+                if (!string.IsNullOrEmpty(itemId))
+                {
+                    GUI.Label(new Rect(x + 5f, y + 6f, slotSize - 10f, 22f), GetDisplayName(itemId));
+                    GUI.Label(new Rect(x + 5f, y + 28f, slotSize - 10f, 18f), $"x{GetItemCount(itemId)}");
+                }
+
+                GUI.Label(new Rect(x + 21f, y + 38f, 20f, 18f), (i + 1).ToString());
+            }
+
+            string selectedItemId = hotbarItemIds[selectedHotbarIndex];
+            string selectedText = string.IsNullOrEmpty(selectedItemId)
+                ? "Empty slot"
+                : $"{GetDisplayName(selectedItemId)} {(IsPlaceableItem(selectedItemId) ? "[Placeable]" : "[Item]")}";
+            GUI.Label(new Rect(startX, y + slotSize + 2f, totalWidth, 20f), $"Selected: {selectedText}");
         }
 
         private void DamageEnemy(EnemyState enemy, int damage, bool fromCreature)
@@ -859,17 +848,15 @@ namespace Archeforge.UnityPort
 
         private void SpawnEnemyDrop(EnemyState enemy)
         {
-            string itemId = UnityEngine.Random.value < 0.6f ? "wood" : "iron_ore";
-            string name = itemId == "wood" ? "Wood" : "Iron Ore";
+            ItemDrop biomeDrop = GetBiomeEnemyDrop(enemy.Position);
             int quantity = enemy.Kind == EnemyKind.Kapre ? 2 : 1;
-            Color color = itemId == "wood" ? new Color(0.71f, 0.52f, 0.25f) : new Color(0.75f, 0.79f, 0.86f);
             worldDrops.Add(new WorldDrop
             {
-                ItemId = itemId,
-                Name = name,
+                ItemId = biomeDrop.ItemId,
+                Name = biomeDrop.Name,
                 Quantity = quantity,
                 Position = enemy.Position,
-                View = CreateDropView($"Drop_{name}", color)
+                View = CreateDropView($"Drop_{biomeDrop.Name}", biomeDrop.Color)
             });
         }
 
@@ -887,49 +874,6 @@ namespace Archeforge.UnityPort
             }
         }
 
-        private void AddItem(string itemId, string name, int quantity, int maxStack = 99)
-        {
-            int remaining = quantity;
-            foreach (var stack in inventory.Where(item => item.Id == itemId))
-            {
-                if (remaining <= 0) break;
-                int free = stack.MaxStack - stack.Quantity;
-                if (free <= 0) continue;
-                int add = Mathf.Min(remaining, free);
-                stack.Quantity += add;
-                remaining -= add;
-            }
-
-            while (remaining > 0 && inventory.Count < 20)
-            {
-                int add = Mathf.Min(remaining, maxStack);
-                inventory.Add(new InventoryItem { Id = itemId, Name = name, Quantity = add, MaxStack = maxStack });
-                remaining -= add;
-            }
-        }
-
-        private bool RemoveItem(string itemId, int quantity)
-        {
-            if (GetItemCount(itemId) < quantity) return false;
-
-            int remaining = quantity;
-            for (int i = 0; i < inventory.Count && remaining > 0; i++)
-            {
-                if (inventory[i].Id != itemId) continue;
-                int remove = Mathf.Min(remaining, inventory[i].Quantity);
-                inventory[i].Quantity -= remove;
-                remaining -= remove;
-            }
-
-            inventory.RemoveAll(item => item.Quantity <= 0);
-            return true;
-        }
-
-        private int GetItemCount(string itemId)
-        {
-            return inventory.Where(item => item.Id == itemId).Sum(item => item.Quantity);
-        }
-
         private void DrawInventoryWindow()
         {
             Rect window = new(Screen.width * 0.5f - 300f, Screen.height * 0.5f - 180f, 600f, 360f);
@@ -941,11 +885,15 @@ namespace Archeforge.UnityPort
                 {
                     GUILayout.BeginHorizontal("box");
                     GUILayout.Label($"{item.Name} x{item.Quantity}", GUILayout.Width(220f));
+                    if (GUILayout.Button("Bar", GUILayout.Width(60f)))
+                    {
+                        AssignItemToSelectedHotbar(item.Id);
+                    }
                     if (IsWeaponItem(item.Id) && GUILayout.Button("Equip", GUILayout.Width(80f)))
                     {
                         EquipWeaponFromItem(item.Id);
                     }
-                    if (GUILayout.Button("Drop", GUILayout.Width(80f)))
+                    if (GUILayout.Button("Drop", GUILayout.Width(70f)))
                     {
                         DropInventoryStack(item);
                         break;
@@ -994,23 +942,22 @@ namespace Archeforge.UnityPort
             float scaleX = mapRect.width / GridWidth;
             float scaleY = mapRect.height / GridHeight;
 
-            for (int y = 0; y < GridHeight; y += 4)
+            for (int y = 0; y < GridHeight; y++)
             {
-                for (int x = 0; x < GridWidth; x += 4)
+                for (int x = 0; x < GridWidth; x++)
                 {
                     if (grid[x, y] == TileType.Empty) continue;
-                    Color color = grid[x, y] == TileType.Solid ? new Color(0.56f, 0.61f, 0.65f) : new Color(0.34f, 0.76f, 0.44f);
-                    DrawGuiRect(new Rect(x * scaleX, (GridHeight - y) * scaleY, scaleX * 4f, scaleY * 4f), color);
+                    DrawGuiRect(new Rect(x * scaleX, (GridHeight - y - 1) * scaleY, scaleX, scaleY), GetMinimapTileColor(x, y));
                 }
             }
 
             foreach (var enemy in enemies.Where(e => e.Alive))
             {
-                DrawGuiRect(new Rect(enemy.Position.x * scaleX, (GridHeight - enemy.Position.y) * scaleY, 3f, 3f), new Color(1f, 0.42f, 0.42f));
+                DrawGuiRect(new Rect(enemy.Position.x * scaleX - 1f, (GridHeight - enemy.Position.y) * scaleY - 1f, 3f, 3f), new Color(1f, 0.42f, 0.42f));
             }
 
-            DrawGuiRect(new Rect(creature.Position.x * scaleX, (GridHeight - creature.Position.y) * scaleY, 4f, 4f), new Color(0.44f, 0.83f, 1f));
-            DrawGuiRect(new Rect(player.Position.x * scaleX, (GridHeight - player.Position.y) * scaleY, 5f, 5f), new Color(1f, 0.94f, 0.54f));
+            DrawGuiRect(new Rect(creature.Position.x * scaleX - 1.5f, (GridHeight - creature.Position.y) * scaleY - 1.5f, 4f, 4f), new Color(0.44f, 0.83f, 1f));
+            DrawGuiRect(new Rect(player.Position.x * scaleX - 2f, (GridHeight - player.Position.y) * scaleY - 2f, 5f, 5f), new Color(1f, 0.94f, 0.54f));
             GUI.EndGroup();
         }
 
@@ -1022,263 +969,5 @@ namespace Archeforge.UnityPort
             GUI.color = previous;
         }
 
-        private bool CanCraft(Recipe recipe)
-        {
-            if (recipe.RequiredAffinity.HasValue && player.Affinities[recipe.RequiredAffinity.Value] < recipe.RequiredAmount)
-            {
-                return false;
-            }
-
-            return recipe.Ingredients.All(ingredient => GetItemCount(ingredient.ItemId) >= ingredient.Quantity);
-        }
-
-        private void Craft(Recipe recipe)
-        {
-            if (!CanCraft(recipe))
-            {
-                AddLog($"Cannot craft {recipe.Name} yet.");
-                return;
-            }
-
-            foreach (var ingredient in recipe.Ingredients)
-            {
-                RemoveItem(ingredient.ItemId, ingredient.Quantity);
-            }
-
-            AddItem(recipe.ResultItemId, recipe.Name, recipe.ResultQuantity);
-            TryEquipCraftedWeapon(recipe.ResultItemId);
-            GrantAffinity(AffinityType.Craft, 15);
-            AddLog($"Crafted {recipe.Name}.");
-        }
-
-        private bool IsWeaponItem(string itemId)
-        {
-            return itemId == "wood_sword" || itemId == "iron_sword";
-        }
-
-        private void EquipWeaponFromItem(string itemId)
-        {
-            if (itemId == "wood_sword") player.EquippedWeapon = WeaponId.WoodSword;
-            if (itemId == "iron_sword") player.EquippedWeapon = WeaponId.IronSword;
-            SaveState();
-        }
-
-        private void TryEquipCraftedWeapon(string itemId)
-        {
-            if (itemId == "iron_sword") player.EquippedWeapon = WeaponId.IronSword;
-            else if (itemId == "wood_sword" && player.EquippedWeapon == WeaponId.RustyDagger) player.EquippedWeapon = WeaponId.WoodSword;
-        }
-
-        private void DropInventoryStack(InventoryItem item)
-        {
-            inventory.Remove(item);
-            Color color = item.Id == "iron_ore" ? new Color(0.75f, 0.79f, 0.86f) : new Color(0.71f, 0.52f, 0.25f);
-            worldDrops.Add(new WorldDrop
-            {
-                ItemId = item.Id,
-                Name = item.Name,
-                Quantity = item.Quantity,
-                Position = player.Position + player.Facing.normalized * 1.2f,
-                View = CreateDropView($"Drop_{item.Name}", color)
-            });
-            SaveState();
-        }
-
-        private WeaponDefinition GetWeapon(WeaponId id) => weaponDefinitions[id];
-
-        private int GetPlayerDamage()
-        {
-            WeaponDefinition weapon = GetWeapon(player.EquippedWeapon);
-            return weapon.BaseDamage + GetLevelDamageBonus() + GetMeleeAffinityBonus() + GetPassiveMeleeDamageBonus();
-        }
-
-        private int RollPlayerDamage(out bool crit)
-        {
-            crit = UnityEngine.Random.value < GetPlayerCritChance();
-            int damage = GetPlayerDamage();
-            if (crit)
-            {
-                damage = Mathf.RoundToInt(damage * GetWeapon(player.EquippedWeapon).CritMultiplier);
-            }
-            return damage;
-        }
-
-        private float GetPlayerCritChance()
-        {
-            float affinityBonus = player.Affinities[AffinityType.Melee] >= 80 ? 0.08f :
-                player.Affinities[AffinityType.Melee] >= 40 ? 0.05f :
-                player.Affinities[AffinityType.Melee] >= 20 ? 0.02f : 0f;
-            return Mathf.Min(0.45f, GetWeapon(player.EquippedWeapon).CritChance + affinityBonus);
-        }
-
-        private int GetLevelDamageBonus() => player.Level - 1;
-
-        private int GetMeleeAffinityBonus()
-        {
-            if (player.Affinities[AffinityType.Melee] >= 80) return 4;
-            if (player.Affinities[AffinityType.Melee] >= 40) return 2;
-            return 0;
-        }
-
-        private int GetPassiveMeleeDamageBonus()
-        {
-            return GetArchetype() switch
-            {
-                "Berserker" => 4,
-                "Battle Smith" => 2,
-                _ => 0
-            };
-        }
-
-        private void GrantAffinity(AffinityType type, int amount)
-        {
-            player.Affinities[type] += amount;
-        }
-
-        private string GetArchetype()
-        {
-            int craft = player.Affinities[AffinityType.Craft];
-            int melee = player.Affinities[AffinityType.Melee];
-            int fire = player.Affinities[AffinityType.Fire];
-            int nature = player.Affinities[AffinityType.Nature];
-
-            if (melee >= 80) return "Berserker";
-            if (melee >= 50 && craft >= 30) return "Battle Smith";
-            if (nature >= 60 && melee >= 20) return "Beastmaster";
-            if (fire >= 50 && melee >= 20) return "Necromancer";
-            if (craft >= 60 && fire >= 20) return "Rune Smith";
-            if (craft >= 40) return "Artisan";
-            if (fire >= 40) return "Pyromancer";
-            if (nature >= 40) return "Naturalist";
-            return "Wanderer";
-        }
-
-        private string GetArchetypeAbility()
-        {
-            return GetArchetype() switch
-            {
-                "Necromancer" => "Bone Spark",
-                "Rune Smith" => "Forge Rune",
-                "Battle Smith" => "Forge Strike",
-                "Pyromancer" => "Inferno",
-                "Berserker" => "Rage Blow",
-                "Artisan" => "Master Craft",
-                _ => "None"
-            };
-        }
-
-        private int GetXpForNextLevel(int level) => level * 25;
-        private int GetCreatureXpForNextLevel() => creature.Level * 18;
-
-        private void AddLog(string message)
-        {
-            logs.Insert(0, message);
-            while (logs.Count > 4) logs.RemoveAt(logs.Count - 1);
-        }
-
-        private string GetLogText() => string.Join("\n", logs);
-
-        private void FlashPanel(Color color)
-        {
-            panelFlashColor = color;
-            panelFlashTimer = 0.35f;
-        }
-
-        private void TryMove(ref Vector2 current, Vector2 target)
-        {
-            Vector2 horizontal = new(target.x, current.y);
-            if (IsWalkable(horizontal)) current.x = horizontal.x;
-
-            Vector2 vertical = new(current.x, target.y);
-            if (IsWalkable(vertical)) current.y = vertical.y;
-        }
-
-        private bool IsWalkable(Vector2 worldPosition)
-        {
-            Vector2Int tile = WorldToTile(worldPosition);
-            return IsWithin(tile) && grid[tile.x, tile.y] != TileType.Solid;
-        }
-
-        private Vector2Int WorldToTile(Vector2 world) => new(Mathf.FloorToInt(world.x / TileSize), Mathf.FloorToInt(world.y / TileSize));
-        private Vector2 TileToWorld(int x, int y) => new(x + 0.5f, y + 0.5f);
-
-        private bool IsWithin(Vector2Int tile)
-        {
-            return tile.x >= 0 && tile.x < GridWidth && tile.y >= 0 && tile.y < GridHeight;
-        }
-
-        private Vector2 GetMouseWorld()
-        {
-            Vector3 mouse = Input.mousePosition;
-            mouse.z = Mathf.Abs(mainCamera.transform.position.z);
-            Vector3 world = mainCamera.ScreenToWorldPoint(mouse);
-            return new Vector2(world.x, world.y);
-        }
-
-        private void ApplyPosition(ActorView view, Vector2 position)
-        {
-            view.GameObject.transform.position = new Vector3(position.x, position.y, 0f);
-        }
-
-        private void SaveState()
-        {
-            var save = new SaveData
-            {
-                PlayerLevel = player.Level,
-                PlayerXp = player.Xp,
-                PlayerHealth = player.Health,
-                Weapon = player.EquippedWeapon.ToString(),
-                PlayerX = player.Position.x,
-                PlayerY = player.Position.y,
-                CreatureLevel = creature.Level,
-                CreatureXp = creature.Xp,
-                CreatureHealth = creature.Health,
-                CreatureX = creature.Position.x,
-                CreatureY = creature.Position.y,
-                CollectorCount = collector.CollectedCount,
-                Affinities = player.Affinities.Select(pair => new AffinityEntry { Key = pair.Key.ToString(), Value = pair.Value }).ToList(),
-                Inventory = inventory.Select(item => new InventoryEntry { Id = item.Id, Name = item.Name, Quantity = item.Quantity, MaxStack = item.MaxStack }).ToList()
-            };
-
-            PlayerPrefs.SetString(SaveKey, JsonUtility.ToJson(save));
-            PlayerPrefs.Save();
-        }
-
-        private void LoadState()
-        {
-            if (!PlayerPrefs.HasKey(SaveKey)) return;
-
-            SaveData save = JsonUtility.FromJson<SaveData>(PlayerPrefs.GetString(SaveKey));
-            if (save == null) return;
-
-            player.Level = Mathf.Max(1, save.PlayerLevel);
-            player.Xp = save.PlayerXp;
-            player.MaxHealth = 100 + (player.Level - 1) * 12;
-            player.Health = Mathf.Clamp(save.PlayerHealth, 1, player.MaxHealth);
-            player.Position = new Vector2(save.PlayerX, save.PlayerY);
-            if (Enum.TryParse(save.Weapon, out WeaponId weapon)) player.EquippedWeapon = weapon;
-
-            creature.Level = Mathf.Max(1, save.CreatureLevel);
-            creature.Xp = save.CreatureXp;
-            creature.MaxHealth = 50 + (creature.Level - 1) * 10;
-            creature.Health = Mathf.Clamp(save.CreatureHealth, 1, creature.MaxHealth);
-            creature.Damage = 5 + (creature.Level - 1) * 2;
-            creature.Position = new Vector2(save.CreatureX, save.CreatureY);
-            collector.CollectedCount = save.CollectorCount;
-
-            foreach (var affinity in save.Affinities)
-            {
-                if (Enum.TryParse(affinity.Key, out AffinityType affinityType))
-                {
-                    player.Affinities[affinityType] = affinity.Value;
-                }
-            }
-
-            inventory.Clear();
-            foreach (var item in save.Inventory)
-            {
-                inventory.Add(new InventoryItem { Id = item.Id, Name = item.Name, Quantity = item.Quantity, MaxStack = item.MaxStack });
-            }
-        }
     }
 }

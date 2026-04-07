@@ -45,14 +45,14 @@ public class Guardian : MonoBehaviour
     {
         float velocity = PatrolSpeed * 1.5f * deltaTime;
         transform.position = (Vector3)((Vector2)transform.position + direction * velocity);
-        rb.velocity = Vector2.zero;
+        rb.linearVelocity = Vector2.zero;
     }
 
     private void Patrol(float deltaTime)
     {
         float velocity = PatrolSpeed * deltaTime;
         transform.position = (Vector3)((Vector2)transform.position + patrolDirection * velocity);
-        rb.velocity = Vector2.zero;
+        rb.linearVelocity = Vector2.zero;
 
         // Change direction occasionally
         if (Random.value < 0.01f)
