@@ -4,9 +4,9 @@ using UnityEngine;
 
 namespace Archeforge.UnityPort
 {
-    internal enum TileType { Empty, Solid, Resource }
-    internal enum TileBiome { Plains, Forest, Ruins, IronWastes, Ember }
-    internal enum TileMaterial
+    public enum TileType { Empty, Solid, Resource }
+    public enum TileBiome { Plains, Forest, Ruins, IronWastes, Ember }
+    public enum TileMaterial
     {
         None,
         PlainsGround,
@@ -29,12 +29,12 @@ namespace Archeforge.UnityPort
         IronBlock
     }
 
-    internal enum AffinityType { Craft, Melee, Fire, Nature }
-    internal enum WeaponId { RustyDagger, WoodSword, IronSword }
-    internal enum EnemyKind { Chicken, Santelmo, Tikbalang, DwendeBlue, Kapre }
+    public enum AffinityType { Craft, Melee, Fire, Nature }
+    public enum WeaponId { RustyDagger, WoodSword, IronSword }
+    public enum EnemyKind { Chicken, Santelmo, Tikbalang, DwendeBlue, Kapre }
 
     [Serializable]
-    internal sealed class WeaponDefinition
+    public sealed class WeaponDefinition
     {
         public WeaponId Id;
         public string Name = string.Empty;
@@ -44,7 +44,7 @@ namespace Archeforge.UnityPort
     }
 
     [Serializable]
-    internal sealed class InventoryItem
+    public sealed class InventoryItem
     {
         public string Id = string.Empty;
         public string Name = string.Empty;
@@ -53,14 +53,14 @@ namespace Archeforge.UnityPort
     }
 
     [Serializable]
-    internal sealed class Ingredient
+    public sealed class Ingredient
     {
         public string ItemId = string.Empty;
         public int Quantity;
     }
 
     [Serializable]
-    internal sealed class Recipe
+    public sealed class Recipe
     {
         public string Id = string.Empty;
         public string Name = string.Empty;
@@ -71,14 +71,14 @@ namespace Archeforge.UnityPort
         public int RequiredAmount;
     }
 
-    internal sealed class ActorView
+    public sealed class ActorView
     {
         public GameObject GameObject = null!;
         public SpriteRenderer Renderer = null!;
         public Vector3 BaseScale = Vector3.one;
     }
 
-    internal sealed class TileView
+    public sealed class TileView
     {
         public GameObject GameObject = null!;
         public SpriteRenderer BaseRenderer = null!;
@@ -87,7 +87,7 @@ namespace Archeforge.UnityPort
         public BoxCollider2D Collider = null!;
     }
 
-    internal sealed class PlayerState
+    public sealed class PlayerState
     {
         public Vector2 Position = new(12f, 12f);
         public Vector2 Facing = Vector2.down;
@@ -105,7 +105,7 @@ namespace Archeforge.UnityPort
         };
     }
 
-    internal sealed class CreatureState
+    public sealed class CreatureState
     {
         public Vector2 Position = new(9f, 10f);
         public int Level = 1;
@@ -117,13 +117,13 @@ namespace Archeforge.UnityPort
         public float WorkCooldown;
     }
 
-    internal sealed class CollectorState
+    public sealed class CollectorState
     {
         public Vector2 Position = new(7f, 10f);
         public int CollectedCount;
     }
 
-    internal sealed class EnemyState
+    public sealed class EnemyState
     {
         public EnemyKind Kind;
         public Vector2 Position;
@@ -140,7 +140,7 @@ namespace Archeforge.UnityPort
         public ActorView View = null!;
     }
 
-    internal sealed class SpawnSlot
+    public sealed class SpawnSlot
     {
         public EnemyKind Kind;
         public Vector2 Center;
@@ -149,7 +149,7 @@ namespace Archeforge.UnityPort
         public float RespawnTimer;
     }
 
-    internal sealed class WorldDrop
+    public sealed class WorldDrop
     {
         public string ItemId = string.Empty;
         public string Name = string.Empty;
@@ -158,7 +158,7 @@ namespace Archeforge.UnityPort
         public ActorView View = null!;
     }
 
-    internal readonly struct ItemDrop
+    public readonly struct ItemDrop
     {
         public ItemDrop(string itemId, string name, Color color)
         {
@@ -173,7 +173,7 @@ namespace Archeforge.UnityPort
     }
 
     [Serializable]
-    internal sealed class SaveData
+    public sealed class SaveData
     {
         public int PlayerLevel;
         public int PlayerXp;
@@ -194,14 +194,14 @@ namespace Archeforge.UnityPort
     }
 
     [Serializable]
-    internal sealed class AffinityEntry
+    public sealed class AffinityEntry
     {
         public string Key = string.Empty;
         public int Value;
     }
 
     [Serializable]
-    internal sealed class InventoryEntry
+    public sealed class InventoryEntry
     {
         public string Id = string.Empty;
         public string Name = string.Empty;

@@ -10,14 +10,14 @@ namespace Archeforge.UnityPort
 {
     public abstract class ArcheforgePrototypeControllerBase : MonoBehaviour
     {
-        protected readonly Dictionary<WeaponId, WeaponDefinition> weaponDefinitions = new()
+        public readonly Dictionary<WeaponId, WeaponDefinition> weaponDefinitions = new()
         {
             { WeaponId.RustyDagger, new WeaponDefinition { Id = WeaponId.RustyDagger, Name = "Rusty Dagger", BaseDamage = 5, CritChance = 0.18f, CritMultiplier = 2.1f } },
             { WeaponId.WoodSword, new WeaponDefinition { Id = WeaponId.WoodSword, Name = "Wood Sword", BaseDamage = 8, CritChance = 0.10f, CritMultiplier = 1.8f } },
             { WeaponId.IronSword, new WeaponDefinition { Id = WeaponId.IronSword, Name = "Iron Sword", BaseDamage = 12, CritChance = 0.06f, CritMultiplier = 1.65f } }
         };
 
-        protected readonly List<Recipe> recipes = new()
+        public readonly List<Recipe> recipes = new()
         {
             new Recipe
             {
@@ -59,46 +59,46 @@ namespace Archeforge.UnityPort
             }
         };
 
-        protected readonly List<string> logs = new();
-        protected readonly List<InventoryItem> inventory = new();
-        protected readonly List<EnemyState> enemies = new();
-        protected readonly List<SpawnSlot> spawnSlots = new();
-        protected readonly List<WorldDrop> worldDrops = new();
-        protected readonly string[] hotbarItemIds = new string[8];
+        public readonly List<string> logs = new();
+        public readonly List<InventoryItem> inventory = new();
+        public readonly List<EnemyState> enemies = new();
+        public readonly List<SpawnSlot> spawnSlots = new();
+        public readonly List<WorldDrop> worldDrops = new();
+        public readonly string[] hotbarItemIds = new string[8];
 
-        protected TileType[,] grid = null!;
-        protected TileBiome[,] biomeGrid = null!;
-        protected TileMaterial[,] materialGrid = null!;
-        protected Sprite whiteSprite = null!;
-        protected Camera mainCamera = null!;
-        protected PlayerState player = null!;
-        protected CreatureState creature = null!;
-        protected CollectorState collector = null!;
-        protected ActorView playerView = null!;
-        protected ActorView creatureView = null!;
-        protected ActorView collectorView = null!;
-        protected TileView[,] tileViews = null!;
-        protected Transform tileRoot = null!;
-        protected Vector2 playerInput;
-        protected Sprite[] playerIdleFrames = Array.Empty<Sprite>();
-        protected Sprite[] playerWalkFrames = Array.Empty<Sprite>();
-        protected float playerAnimationTimer;
-        protected int playerAnimationFrame;
-        protected bool inventoryOpen;
-        protected bool craftingOpen;
-        protected Vector2 inventoryScroll;
-        protected Vector2 craftingScroll;
-        protected float panelFlashTimer;
-        protected Color panelFlashColor = Color.cyan;
-        protected int selectedHotbarIndex;
+        public TileType[,] grid = null!;
+        public TileBiome[,] biomeGrid = null!;
+        public TileMaterial[,] materialGrid = null!;
+        public Sprite whiteSprite = null!;
+        public Camera mainCamera = null!;
+        public PlayerState player = null!;
+        public CreatureState creature = null!;
+        public CollectorState collector = null!;
+        public ActorView playerView = null!;
+        public ActorView creatureView = null!;
+        public ActorView collectorView = null!;
+        public TileView[,] tileViews = null!;
+        public Transform tileRoot = null!;
+        public Vector2 playerInput;
+        public Sprite[] playerIdleFrames = Array.Empty<Sprite>();
+        public Sprite[] playerWalkFrames = Array.Empty<Sprite>();
+        public float playerAnimationTimer;
+        public int playerAnimationFrame;
+        public bool inventoryOpen;
+        public bool craftingOpen;
+        public Vector2 inventoryScroll;
+        public Vector2 craftingScroll;
+        public float panelFlashTimer;
+        public Color panelFlashColor = Color.cyan;
+        public int selectedHotbarIndex;
 
-        protected const int GridWidth = 100;
-        protected const int GridHeight = 100;
-        protected const float TileSize = 1f;
-        protected const float PlayerSpeed = 6.5f;
-        protected const string SaveKey = "archeforge-unity-prototype-v1";
+        public const int GridWidth = 100;
+        public const int GridHeight = 100;
+        public const float TileSize = 1f;
+        public const float PlayerSpeed = 6.5f;
+        public const string SaveKey = "archeforge-unity-prototype-v1";
 
-        protected void GenerateGrid()
+        public void GenerateGrid()
         {
             for (int y = 0; y < GridHeight; y++)
             {
@@ -116,7 +116,7 @@ namespace Archeforge.UnityPort
             }
         }
 
-        protected TileBiome GetBiomeAt(int x, int y)
+        public TileBiome GetBiomeAt(int x, int y)
         {
             float nx = x / (float)GridWidth;
             float ny = y / (float)GridHeight;
@@ -129,7 +129,7 @@ namespace Archeforge.UnityPort
             return TileBiome.Plains;
         }
 
-        protected float GetBiomeRockBias(TileBiome biome)
+        public float GetBiomeRockBias(TileBiome biome)
         {
             return biome switch
             {
@@ -141,7 +141,7 @@ namespace Archeforge.UnityPort
             };
         }
 
-        protected TileMaterial GetDefaultMaterial(TileBiome biome, TileType tileType)
+        public TileMaterial GetDefaultMaterial(TileBiome biome, TileType tileType)
         {
             return tileType switch
             {
@@ -172,7 +172,7 @@ namespace Archeforge.UnityPort
             };
         }
 
-        protected void CreateTileMapView()
+        public void CreateTileMapView()
         {
             tileRoot = new GameObject("WorldTiles").transform;
 
@@ -222,7 +222,7 @@ namespace Archeforge.UnityPort
             }
         }
 
-        protected void RefreshTileVisual(int x, int y)
+        public void RefreshTileVisual(int x, int y)
         {
             TileView tile = tileViews[x, y];
             if (tile == null) return;
@@ -255,7 +255,7 @@ namespace Archeforge.UnityPort
             }
         }
 
-        protected Color GetFloorColor(TileMaterial material)
+        public Color GetFloorColor(TileMaterial material)
         {
             return material switch
             {
@@ -267,7 +267,7 @@ namespace Archeforge.UnityPort
             };
         }
 
-        protected Color GetWallColor(TileMaterial material)
+        public Color GetWallColor(TileMaterial material)
         {
             return material switch
             {
@@ -282,7 +282,7 @@ namespace Archeforge.UnityPort
             };
         }
 
-        protected Color GetWallAccentColor(TileMaterial material)
+        public Color GetWallAccentColor(TileMaterial material)
         {
             return material switch
             {
@@ -297,7 +297,7 @@ namespace Archeforge.UnityPort
             };
         }
 
-        protected Color GetWallShadowColor(TileMaterial material)
+        public Color GetWallShadowColor(TileMaterial material)
         {
             return material switch
             {
@@ -312,7 +312,7 @@ namespace Archeforge.UnityPort
             };
         }
 
-        protected Color GetResourceColor(TileMaterial material)
+        public Color GetResourceColor(TileMaterial material)
         {
             return material switch
             {
@@ -324,7 +324,7 @@ namespace Archeforge.UnityPort
             };
         }
 
-        protected Color GetResourceAccentColor(TileMaterial material)
+        public Color GetResourceAccentColor(TileMaterial material)
         {
             return material switch
             {
@@ -336,7 +336,7 @@ namespace Archeforge.UnityPort
             };
         }
 
-        protected Color GetResourceShadowColor(TileMaterial material)
+        public Color GetResourceShadowColor(TileMaterial material)
         {
             return material switch
             {
@@ -348,7 +348,7 @@ namespace Archeforge.UnityPort
             };
         }
 
-        protected Color GetMinimapTileColor(int x, int y)
+        public Color GetMinimapTileColor(int x, int y)
         {
             return grid[x, y] switch
             {
@@ -358,14 +358,14 @@ namespace Archeforge.UnityPort
             };
         }
 
-        protected void CreateViews()
+        public void CreateViews()
         {
             playerView = CreatePlayerView();
             creatureView = CreateActorView("Creature", new Color(0.44f, 0.83f, 1f), new Vector2(0.8f, 0.8f));
             collectorView = CreateActorView("Collector", new Color(0.45f, 0.9f, 0.52f), new Vector2(0.7f, 0.7f));
         }
 
-        protected ActorView CreateActorView(string name, Color color, Vector2 size)
+        public ActorView CreateActorView(string name, Color color, Vector2 size)
         {
             var go = new GameObject(name);
             var renderer = go.AddComponent<SpriteRenderer>();
@@ -375,7 +375,7 @@ namespace Archeforge.UnityPort
             return new ActorView { GameObject = go, Renderer = renderer, BaseScale = go.transform.localScale };
         }
 
-        protected ActorView CreatePlayerView()
+        public ActorView CreatePlayerView()
         {
             LoadPlayerSprites();
             if (playerIdleFrames.Length > 0)
@@ -390,7 +390,7 @@ namespace Archeforge.UnityPort
             return fallback;
         }
 
-        protected ActorView CreateSpriteActorView(string name, Sprite sprite, Vector3 scale)
+        public ActorView CreateSpriteActorView(string name, Sprite sprite, Vector3 scale)
         {
             var go = new GameObject(name);
             var renderer = go.AddComponent<SpriteRenderer>();
@@ -400,7 +400,7 @@ namespace Archeforge.UnityPort
             return new ActorView { GameObject = go, Renderer = renderer, BaseScale = scale };
         }
 
-        protected void LoadPlayerSprites()
+        public void LoadPlayerSprites()
         {
             if (playerIdleFrames.Length > 0 || playerWalkFrames.Length > 0) return;
 
@@ -421,7 +421,7 @@ namespace Archeforge.UnityPort
                 "Assets/Dragon Warrior Files/Dragon Warrior PNG/walk_06.png");
         }
 
-        protected Sprite[] LoadSprites(params string[] assetPaths)
+        public Sprite[] LoadSprites(params string[] assetPaths)
         {
             var sprites = new List<Sprite>();
             foreach (string assetPath in assetPaths)
@@ -433,7 +433,7 @@ namespace Archeforge.UnityPort
             return sprites.ToArray();
         }
 
-        protected Sprite LoadSpriteAsset(string assetPath)
+        public Sprite LoadSpriteAsset(string assetPath)
         {
 #if UNITY_EDITOR
             return AssetDatabase.LoadAssetAtPath<Sprite>(assetPath);
@@ -442,7 +442,7 @@ namespace Archeforge.UnityPort
 #endif
         }
 
-        protected GameObject LoadPrefabAsset(string assetPath)
+        public GameObject LoadPrefabAsset(string assetPath)
         {
 #if UNITY_EDITOR
             return AssetDatabase.LoadAssetAtPath<GameObject>(assetPath);
@@ -451,7 +451,7 @@ namespace Archeforge.UnityPort
 #endif
         }
 
-        protected ActorView CreateEnemyView(EnemyKind kind, Color fallbackColor)
+        public ActorView CreateEnemyView(EnemyKind kind, Color fallbackColor)
         {
             switch (kind)
             {
@@ -490,7 +490,7 @@ namespace Archeforge.UnityPort
             return CreateActorView(kind.ToString(), fallbackColor, new Vector2(0.85f, 0.85f));
         }
 
-        protected ActorView TryCreateSpriteEnemyView(string name, string assetPath, Vector3 scale)
+        public ActorView TryCreateSpriteEnemyView(string name, string assetPath, Vector3 scale)
         {
             Sprite sprite = LoadSpriteAsset(assetPath);
             if (sprite == null) return null;
@@ -499,7 +499,7 @@ namespace Archeforge.UnityPort
             return view;
         }
 
-        protected ActorView TryCreatePrefabEnemyView(string name, string assetPath, Vector3 scale)
+        public ActorView TryCreatePrefabEnemyView(string name, string assetPath, Vector3 scale)
         {
             GameObject prefab = LoadPrefabAsset(assetPath);
             if (prefab == null) return null;
@@ -522,7 +522,7 @@ namespace Archeforge.UnityPort
             return new ActorView { GameObject = instance, Renderer = renderer, BaseScale = scale };
         }
 
-        protected void UpdatePlayerPresentation(float dt)
+        public void UpdatePlayerPresentation(float dt)
         {
             Sprite[] frames = playerInput.sqrMagnitude > 0.01f ? playerWalkFrames : playerIdleFrames;
             if (frames.Length > 0)
@@ -542,7 +542,7 @@ namespace Archeforge.UnityPort
             if (Mathf.Abs(playerInput.x) > 0.01f) SetFacing(playerView, playerInput.x);
         }
 
-        protected void SetFacing(ActorView view, float horizontal)
+        public void SetFacing(ActorView view, float horizontal)
         {
             if (Mathf.Abs(horizontal) <= 0.01f) return;
             Vector3 scale = view.BaseScale;
@@ -550,14 +550,14 @@ namespace Archeforge.UnityPort
             view.GameObject.transform.localScale = scale;
         }
 
-        protected ActorView CreateDropView(string name, Color color)
+        public ActorView CreateDropView(string name, Color color)
         {
             var view = CreateActorView(name, color, new Vector2(0.35f, 0.35f));
             view.Renderer.sortingOrder = 2;
             return view;
         }
 
-        protected ItemDrop GetBiomeMineDrop(int x, int y)
+        public ItemDrop GetBiomeMineDrop(int x, int y)
         {
             return biomeGrid[x, y] switch
             {
@@ -569,7 +569,7 @@ namespace Archeforge.UnityPort
             };
         }
 
-        protected ItemDrop GetBiomeEnemyDrop(Vector2 position)
+        public ItemDrop GetBiomeEnemyDrop(Vector2 position)
         {
             Vector2Int tile = WorldToTile(position);
             if (!IsWithin(tile)) return new ItemDrop("wood", "Wood", new Color(0.71f, 0.52f, 0.25f));
@@ -584,7 +584,7 @@ namespace Archeforge.UnityPort
             };
         }
 
-        protected TileMaterial GetPlacedMaterial(string itemId)
+        public TileMaterial GetPlacedMaterial(string itemId)
         {
             return itemId switch
             {
@@ -595,12 +595,12 @@ namespace Archeforge.UnityPort
             };
         }
 
-        protected bool IsPlacedBlock(TileMaterial material)
+        public bool IsPlacedBlock(TileMaterial material)
         {
             return material == TileMaterial.WoodBlock || material == TileMaterial.StoneBlock || material == TileMaterial.IronBlock;
         }
 
-        protected string GetPlacedBlockItemId(TileMaterial material)
+        public string GetPlacedBlockItemId(TileMaterial material)
         {
             return material switch
             {
@@ -611,7 +611,7 @@ namespace Archeforge.UnityPort
             };
         }
 
-        protected void AddItem(string itemId, string name, int quantity, int maxStack = 99)
+        public void AddItem(string itemId, string name, int quantity, int maxStack = 99)
         {
             int remaining = quantity;
             foreach (var stack in inventory.Where(item => item.Id == itemId))
@@ -632,7 +632,7 @@ namespace Archeforge.UnityPort
             }
         }
 
-        protected bool RemoveItem(string itemId, int quantity)
+        public bool RemoveItem(string itemId, int quantity)
         {
             if (GetItemCount(itemId) < quantity) return false;
             int remaining = quantity;
@@ -649,18 +649,18 @@ namespace Archeforge.UnityPort
             return true;
         }
 
-        protected int GetItemCount(string itemId)
+        public int GetItemCount(string itemId)
         {
             return inventory.Where(item => item.Id == itemId).Sum(item => item.Quantity);
         }
 
-        protected bool CanCraft(Recipe recipe)
+        public bool CanCraft(Recipe recipe)
         {
             if (recipe.RequiredAffinity.HasValue && player.Affinities[recipe.RequiredAffinity.Value] < recipe.RequiredAmount) return false;
             return recipe.Ingredients.All(ingredient => GetItemCount(ingredient.ItemId) >= ingredient.Quantity);
         }
 
-        protected void Craft(Recipe recipe)
+        public void Craft(Recipe recipe)
         {
             if (!CanCraft(recipe))
             {
@@ -675,22 +675,22 @@ namespace Archeforge.UnityPort
             AddLog($"Crafted {recipe.Name}.");
         }
 
-        protected bool IsWeaponItem(string itemId) => itemId == "wood_sword" || itemId == "iron_sword";
+        public bool IsWeaponItem(string itemId) => itemId == "wood_sword" || itemId == "iron_sword";
 
-        protected void EquipWeaponFromItem(string itemId)
+        public void EquipWeaponFromItem(string itemId)
         {
             if (itemId == "wood_sword") player.EquippedWeapon = WeaponId.WoodSword;
             if (itemId == "iron_sword") player.EquippedWeapon = WeaponId.IronSword;
             SaveState();
         }
 
-        protected void TryEquipCraftedWeapon(string itemId)
+        public void TryEquipCraftedWeapon(string itemId)
         {
             if (itemId == "iron_sword") player.EquippedWeapon = WeaponId.IronSword;
             else if (itemId == "wood_sword" && player.EquippedWeapon == WeaponId.RustyDagger) player.EquippedWeapon = WeaponId.WoodSword;
         }
 
-        protected void DropInventoryStack(InventoryItem item)
+        public void DropInventoryStack(InventoryItem item)
         {
             inventory.Remove(item);
             CleanupHotbarReferences(item.Id);
@@ -713,14 +713,14 @@ namespace Archeforge.UnityPort
             SaveState();
         }
 
-        protected void AssignItemToSelectedHotbar(string itemId)
+        public void AssignItemToSelectedHotbar(string itemId)
         {
             hotbarItemIds[selectedHotbarIndex] = itemId;
             AddLog($"{GetDisplayName(itemId)} assigned to slot {selectedHotbarIndex + 1}.");
             SaveState();
         }
 
-        protected void CleanupHotbarReferences(string itemId)
+        public void CleanupHotbarReferences(string itemId)
         {
             if (GetItemCount(itemId) > 0) return;
             for (int i = 0; i < hotbarItemIds.Length; i++)
@@ -729,9 +729,9 @@ namespace Archeforge.UnityPort
             }
         }
 
-        protected bool IsPlaceableItem(string itemId) => itemId == "wood" || itemId == "stone" || itemId == "iron_ore";
+        public bool IsPlaceableItem(string itemId) => itemId == "wood" || itemId == "stone" || itemId == "iron_ore";
 
-        protected string GetDisplayName(string itemId)
+        public string GetDisplayName(string itemId)
         {
             InventoryItem stack = inventory.FirstOrDefault(item => item.Id == itemId);
             if (stack != null) return stack.Name;
@@ -747,15 +747,15 @@ namespace Archeforge.UnityPort
             };
         }
 
-        protected WeaponDefinition GetWeapon(WeaponId id) => weaponDefinitions[id];
+        public WeaponDefinition GetWeapon(WeaponId id) => weaponDefinitions[id];
 
-        protected int GetPlayerDamage()
+        public int GetPlayerDamage()
         {
             WeaponDefinition weapon = GetWeapon(player.EquippedWeapon);
             return weapon.BaseDamage + GetLevelDamageBonus() + GetMeleeAffinityBonus() + GetPassiveMeleeDamageBonus();
         }
 
-        protected int RollPlayerDamage(out bool crit)
+        public int RollPlayerDamage(out bool crit)
         {
             crit = UnityEngine.Random.value < GetPlayerCritChance();
             int damage = GetPlayerDamage();
@@ -763,7 +763,7 @@ namespace Archeforge.UnityPort
             return damage;
         }
 
-        protected float GetPlayerCritChance()
+        public float GetPlayerCritChance()
         {
             float affinityBonus = player.Affinities[AffinityType.Melee] >= 80 ? 0.08f :
                 player.Affinities[AffinityType.Melee] >= 40 ? 0.05f :
@@ -771,16 +771,16 @@ namespace Archeforge.UnityPort
             return Mathf.Min(0.45f, GetWeapon(player.EquippedWeapon).CritChance + affinityBonus);
         }
 
-        protected int GetLevelDamageBonus() => player.Level - 1;
+        public int GetLevelDamageBonus() => player.Level - 1;
 
-        protected int GetMeleeAffinityBonus()
+        public int GetMeleeAffinityBonus()
         {
             if (player.Affinities[AffinityType.Melee] >= 80) return 4;
             if (player.Affinities[AffinityType.Melee] >= 40) return 2;
             return 0;
         }
 
-        protected int GetPassiveMeleeDamageBonus()
+        public int GetPassiveMeleeDamageBonus()
         {
             return GetArchetype() switch
             {
@@ -790,9 +790,9 @@ namespace Archeforge.UnityPort
             };
         }
 
-        protected void GrantAffinity(AffinityType type, int amount) => player.Affinities[type] += amount;
+        public void GrantAffinity(AffinityType type, int amount) => player.Affinities[type] += amount;
 
-        protected string GetArchetype()
+        public string GetArchetype()
         {
             int craft = player.Affinities[AffinityType.Craft];
             int melee = player.Affinities[AffinityType.Melee];
@@ -810,7 +810,7 @@ namespace Archeforge.UnityPort
             return "Wanderer";
         }
 
-        protected string GetArchetypeAbility()
+        public string GetArchetypeAbility()
         {
             return GetArchetype() switch
             {
@@ -824,24 +824,24 @@ namespace Archeforge.UnityPort
             };
         }
 
-        protected int GetXpForNextLevel(int level) => level * 25;
-        protected int GetCreatureXpForNextLevel() => creature.Level * 18;
+        public int GetXpForNextLevel(int level) => level * 25;
+        public int GetCreatureXpForNextLevel() => creature.Level * 18;
 
-        protected void AddLog(string message)
+        public void AddLog(string message)
         {
             logs.Insert(0, message);
             while (logs.Count > 4) logs.RemoveAt(logs.Count - 1);
         }
 
-        protected string GetLogText() => string.Join("\n", logs);
+        public string GetLogText() => string.Join("\n", logs);
 
-        protected void FlashPanel(Color color)
+        public void FlashPanel(Color color)
         {
             panelFlashColor = color;
             panelFlashTimer = 0.35f;
         }
 
-        protected void TryMove(ref Vector2 current, Vector2 target)
+        public void TryMove(ref Vector2 current, Vector2 target)
         {
             Vector2 horizontal = new(target.x, current.y);
             if (IsWalkable(horizontal)) current.x = horizontal.x;
@@ -849,21 +849,21 @@ namespace Archeforge.UnityPort
             if (IsWalkable(vertical)) current.y = vertical.y;
         }
 
-        protected bool IsWalkable(Vector2 worldPosition)
+        public bool IsWalkable(Vector2 worldPosition)
         {
             Vector2Int tile = WorldToTile(worldPosition);
             return IsWithin(tile) && grid[tile.x, tile.y] != TileType.Solid;
         }
 
-        protected Vector2Int WorldToTile(Vector2 world) => new(Mathf.FloorToInt(world.x / TileSize), Mathf.FloorToInt(world.y / TileSize));
-        protected Vector2 TileToWorld(int x, int y) => new(x + 0.5f, y + 0.5f);
+        public Vector2Int WorldToTile(Vector2 world) => new(Mathf.FloorToInt(world.x / TileSize), Mathf.FloorToInt(world.y / TileSize));
+        public Vector2 TileToWorld(int x, int y) => new(x + 0.5f, y + 0.5f);
 
-        protected bool IsWithin(Vector2Int tile)
+        public bool IsWithin(Vector2Int tile)
         {
             return tile.x >= 0 && tile.x < GridWidth && tile.y >= 0 && tile.y < GridHeight;
         }
 
-        protected Vector2 GetMouseWorld()
+        public Vector2 GetMouseWorld()
         {
             Vector3 mouse = Input.mousePosition;
             mouse.z = Mathf.Abs(mainCamera.transform.position.z);
@@ -871,12 +871,12 @@ namespace Archeforge.UnityPort
             return new Vector2(world.x, world.y);
         }
 
-        protected void ApplyPosition(ActorView view, Vector2 position)
+        public void ApplyPosition(ActorView view, Vector2 position)
         {
             view.GameObject.transform.position = new Vector3(position.x, position.y, 0f);
         }
 
-        protected void SaveState()
+        public void SaveState()
         {
             var save = new SaveData
             {
@@ -902,7 +902,7 @@ namespace Archeforge.UnityPort
             PlayerPrefs.Save();
         }
 
-        protected void LoadState()
+        public void LoadState()
         {
             if (!PlayerPrefs.HasKey(SaveKey)) return;
             SaveData save = JsonUtility.FromJson<SaveData>(PlayerPrefs.GetString(SaveKey));

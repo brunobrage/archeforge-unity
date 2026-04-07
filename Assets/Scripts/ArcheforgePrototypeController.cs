@@ -3,10 +3,120 @@ using UnityEngine;
 using UnityEngine.EventSystems;
 using UnityEngine.UI;
 
+#if UNITY_EDITOR
+        using UnityEditor;
+#endif
+
+
 namespace Archeforge.UnityPort
 {
     public class ArcheforgePrototypeController : ArcheforgePrototypeControllerBase
     {
+        [Header("Editor Preview")]
+        public bool enablePreview = false;
+        private bool previewBuilt = false;
+        
+        public void BuildEditorPreview()
+        {
+            ClearPreview();
+
+            mainCamera = Camera.main;
+            if (mainCamera == null)
+            {
+                var cameraObject = new GameObject("Main Camera");
+                mainCamera = cameraObject.AddComponent<Camera>();
+                cameraObject.tag = "MainCamera";
+            }
+
+            mainCamera.orthographic = true;
+            mainCamera.orthographicSize = 7.5f;
+
+            whiteSprite = Sprite.Create(Texture2D.whiteTexture,
+                new Rect(0f, 0f, 1f, 1f),
+                new Vector2(0.5f, 0.5f),
+                1f);
+
+            grid = new TileType[GridWidth, GridHeight];
+            biomeGrid = new TileBiome[GridWidth, GridHeight];
+            materialGrid = new TileMaterial[GridWidth, GridHeight];
+            tileViews = new TileView[GridWidth, GridHeight];
+
+            player = new PlayerState();
+            creature = new CreatureState();
+            collector = new CollectorState();
+
+            // 🔥 REUSANDO SEU FLOW
+            GenerateGrid();
+            CreateTileMapView();
+            BuildSpawnSlots();
+            CreateViews();
+            SpawnInitialEnemies();
+
+            previewBuilt = true;
+        }
+
+        public void ClearPreview()
+        {
+            foreach (Transform child in transform)
+            {
+                DestroyImmediate(child.gameObject);
+            }
+
+            enemies.Clear();
+            worldDrops.Clear();
+            spawnSlots.Clear();
+
+            previewBuilt = false;
+        }
+
+        private void Update()
+        {
+#if UNITY_EDITOR
+    if (!Application.isPlaying && enablePreview)
+    {
+        if (!previewBuilt)
+        {
+            BuildEditorPreview();
+        }
+    }
+#endif
+
+            if (!Application.isPlaying) return;
+
+            // 🔥 seu Update original continua normal
+            float dt = Time.deltaTime;
+
+            HandleGlobalInput();
+            UpdateCamera();
+            UpdateSpawnRespawns(dt);
+            UpdateEnemies(dt);
+            UpdateCreature(dt);
+            UpdateCollector(dt);
+            UpdateWorldDrops();
+
+            if (!inventoryOpen && !craftingOpen)
+            {
+                HandleMovement(dt);
+                HandleActions();
+                HandleMining();
+            }
+            else
+            {
+                playerInput = Vector2.zero;
+                ApplyPosition(playerView, player.Position);
+            }
+
+            UpdatePlayerPresentation(dt);
+            ApplyPosition(playerView, player.Position);
+            ApplyPosition(creatureView, creature.Position);
+            ApplyPosition(collectorView, collector.Position);
+
+            if (panelFlashTimer > 0f)
+            {
+                panelFlashTimer -= dt;
+            }
+        }
+
         private Canvas runtimeCanvas = null!;
 
         private void Awake()
@@ -67,40 +177,40 @@ namespace Archeforge.UnityPort
             }
         }
 
-        private void Update()
-        {
-            float dt = Time.deltaTime;
+        // private void Update()
+        // {
+        //     float dt = Time.deltaTime;
 
-            HandleGlobalInput();
-            UpdateCamera();
-            UpdateSpawnRespawns(dt);
-            UpdateEnemies(dt);
-            UpdateCreature(dt);
-            UpdateCollector(dt);
-            UpdateWorldDrops();
+        //     HandleGlobalInput();
+        //     UpdateCamera();
+        //     UpdateSpawnRespawns(dt);
+        //     UpdateEnemies(dt);
+        //     UpdateCreature(dt);
+        //     UpdateCollector(dt);
+        //     UpdateWorldDrops();
 
-            if (!inventoryOpen && !craftingOpen)
-            {
-                HandleMovement(dt);
-                HandleActions();
-                HandleMining();
-            }
-            else
-            {
-                playerInput = Vector2.zero;
-                ApplyPosition(playerView, player.Position);
-            }
+        //     if (!inventoryOpen && !craftingOpen)
+        //     {
+        //         HandleMovement(dt);
+        //         HandleActions();
+        //         HandleMining();
+        //     }
+        //     else
+        //     {
+        //         playerInput = Vector2.zero;
+        //         ApplyPosition(playerView, player.Position);
+        //     }
 
-            UpdatePlayerPresentation(dt);
-            ApplyPosition(playerView, player.Position);
-            ApplyPosition(creatureView, creature.Position);
-            ApplyPosition(collectorView, collector.Position);
+        //     UpdatePlayerPresentation(dt);
+        //     ApplyPosition(playerView, player.Position);
+        //     ApplyPosition(creatureView, creature.Position);
+        //     ApplyPosition(collectorView, collector.Position);
 
-            if (panelFlashTimer > 0f)
-            {
-                panelFlashTimer -= dt;
-            }
-        }
+        //     if (panelFlashTimer > 0f)
+        //     {
+        //         panelFlashTimer -= dt;
+        //     }
+        // }
 
         private void OnApplicationQuit()
         {
